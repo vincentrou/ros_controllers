@@ -270,18 +270,8 @@ namespace four_wheel_steering_controller{
     if (std::isnan(fl_steering) || std::isnan(fr_steering)
         || std::isnan(rl_steering) || std::isnan(rr_steering))
       return;
-    double front_steering_pos = 0.0;
-    if(fabs(fl_steering) > 0.001 || fabs(fr_steering) > 0.001)
-    {
-      front_steering_pos = atan(2*tan(fl_steering)*tan(fr_steering)/
-                                      (tan(fl_steering) + tan(fr_steering)));
-    }
-    double rear_steering_pos = 0.0;
-    if(fabs(rl_steering) > 0.001 || fabs(rr_steering) > 0.001)
-    {
-      rear_steering_pos = atan(2*tan(rl_steering)*tan(rr_steering)/
-                                     (tan(rl_steering) + tan(rr_steering)));
-    }
+    double front_steering_pos = computeVirtualSteering(fl_steering, fr_steering);
+    double rear_steering_pos = computeVirtualSteering(rl_steering, rr_steering);
 
     ROS_DEBUG_STREAM_THROTTLE(1, "rl_steering "<<rl_steering<<" rr_steering "<<rr_steering<<" rear_steering_pos "<<rear_steering_pos);
     // Estimate linear and angular velocity using joint information
@@ -671,6 +661,27 @@ namespace four_wheel_steering_controller{
     tf_odom_pub_->msg_.transforms[0].transform.translation.z = 0.0;
     tf_odom_pub_->msg_.transforms[0].child_frame_id = base_frame_id_;
     tf_odom_pub_->msg_.transforms[0].header.frame_id = "odom";
+  }
+
+  double FourWheelSteeringController::computeVirtualSteering(const double& left_steering, const double& right_steering)
+  {
+    double steering_pos = 0.0;
+    bool compute_steering = false;
+    if(fabs(left_steering) > 0.001 || fabs(right_steering) > 0.001)
+    {
+      if(std::signbit(left_steering) != std::signbit(right_steering))
+      {
+        if(fabs(left_steering) > 0.05 || fabs(right_steering) > 0.05)
+          compute_steering = true;
+      }
+      else
+        compute_steering = true;
+    }
+
+    if(compute_steering == true)
+      steering_pos = atan(2*tan(left_steering)*tan(right_steering)/
+                                    (tan(left_steering) + tan(right_steering)));
+    return steering_pos;
   }
 
 } // namespace four_wheel_steering_controller

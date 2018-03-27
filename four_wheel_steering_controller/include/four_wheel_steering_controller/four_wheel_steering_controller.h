@@ -225,6 +225,8 @@ namespace four_wheel_steering_controller{
      */
     void setOdomPubFields(ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
 
+    double computeVirtualSteering(const double& left_steering, const double& right_steering);
+
   };
 
   PLUGINLIB_EXPORT_CLASS(four_wheel_steering_controller::FourWheelSteeringController, controller_interface::ControllerBase);
